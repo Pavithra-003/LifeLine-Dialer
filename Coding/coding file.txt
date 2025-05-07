@@ -1,0 +1,106 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
+
+// Define pin connections for GSM
+#define SIM800_RX D0  // ESP8266 D0 pin connected to GSM module's RX pin
+#define SIM800_TX D3  // ESP8266 D3 pin connected to GSM module's TX pin
+
+// Define button pins
+#define BUTTON1 D5    // Button to call +919514740046
+#define BUTTON2 D6    // Button to call +919489550344
+#define BUTTON3 D7    // Button to call +919514740046
+
+// Define the phone numbers
+const char phoneNumber1[] = "+916374822646";  // First phone number
+const char phoneNumber2[] = "+919345718779";  // Second phone number
+
+SoftwareSerial gsmSerial(SIM800_RX, SIM800_TX);  // RX, TX for software serial
+
+// Initialize the LCD, set the I2C address of your display (e.g., 0x27 or 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // I2C address 0x27, 16 columns, 2 rows
+
+void setup() {
+  // Initialize serial communication with SIM800C
+  gsmSerial.begin(9600);  // SIM800C works best at 9600 baud rate
+  Serial.begin(115200);   // For debug purposes, to monitor on Serial Monitor
+
+  // Setup buttons as input with internal pull-up resistors
+  pinMode(BUTTON1, INPUT_PULLUP);
+  pinMode(BUTTON2, INPUT_PULLUP);
+  pinMode(BUTTON3, INPUT_PULLUP);
+
+  // Initialize the LCD and print a welcome message
+  lcd.init();
+  lcd.backlight();  // Turn on the backlight
+  lcd.clear();
+
+  lcd.setCursor(0, 0);  // Set cursor to the first column and row
+  lcd.print("System Ready");
+  lcd.setCursor(0, 1);
+  lcd.print("Waiting...");
+
+  Serial.println("System ready. Press button to make a call.");
+}
+
+void loop() {
+  // Check if Button 1 is pressed (D5)
+  if (digitalRead(BUTTON1) == LOW) {
+    Serial.println("Calling number 1 from Button 1...");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Calling...");
+    lcd.setCursor(0, 1);
+    lcd.print(phoneNumber1);  // Display number being called
+    makeCall(phoneNumber1);
+    delay(10000);  // Debounce delay
+    displayReadyMessage();  // Display "System Ready" after call
+  }
+
+  // Check if Button 2 is pressed (D6)
+  if (digitalRead(BUTTON2) == LOW) {
+    Serial.println("Calling number 2 from Button 2...");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Calling...");
+    lcd.setCursor(0, 1);
+    lcd.print(phoneNumber2);  // Display number being called
+    makeCall(phoneNumber2);
+    delay(10000);  // Debounce delay
+    displayReadyMessage();  // Display "System Ready" after call
+  }
+
+  // Check if Button 3 is pressed (D7)
+  if (digitalRead(BUTTON3) == LOW) {
+    Serial.println("Calling number 1 from Button 3...");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Calling...");
+    lcd.setCursor(0, 1);
+    lcd.print(phoneNumber1);  // Display number being called
+    makeCall(phoneNumber1);  // Call the first phone number again
+    delay(10000);  // Debounce delay
+    displayReadyMessage();  // Display "System Ready" after call
+  }
+}
+
+// Function to make a call using the SIM800C
+void makeCall(const char* phoneNumber) {
+  gsmSerial.println("ATD" + String(phoneNumber) + ";");  // Dial the number
+  Serial.println("Dialing: " + String(phoneNumber));
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Dialing:");
+  lcd.setCursor(0, 1);
+  lcd.print(phoneNumber);  // Display the number being dialed
+
+}
+
+// Function to display "System Ready" after the call ends
+void displayReadyMessage() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
+  lcd.setCursor(0, 1);
+  lcd.print("Waiting...");
+}
